@@ -1,0 +1,10 @@
+conf.d/*
+log/*
+cache/*
+*.o
+*.old
+netdata
+apps.plugin
+/.settings
+/.cproject
+/.project
