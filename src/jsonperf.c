@@ -544,10 +544,10 @@ CALLCOMPBEGIN2FREQ(our_stats, disk, FIRST_PAGINGSPACE, curr, nb_disks)
 
     prev = our_stats->disk.previous+idx;
     if (idx == our_stats->disk.nb)
-      {
-        memset(prev, 0, sizeof(STRUCT_PREFIX(disk_t)));
-        our_stats->disk.nb++;
-      }
+    {
+      memset(prev, 0, sizeof(STRUCT_PREFIX(disk_t)));
+      our_stats->disk.nb++;
+    }
 
     g_string_append_printf(our_stats->out,
              "%s"
@@ -1378,7 +1378,7 @@ void set_group_freq(modPerf_stats_t *self, GROUP_e group, int type, unsigned int
   self->mask_freq_std = freq_min_std;
 }
 
-int standard(modPerf_stats_t *self, uint64_t tv_sec)
+int standard(modPerf_stats_t *self, uint64_t tv_sec, char *sep)
 {
   int toprint = 0;
   g_string_assign(self->out, "{");
@@ -1420,11 +1420,11 @@ int standard(modPerf_stats_t *self, uint64_t tv_sec)
     call_processes(self);
     toprint = 1;
   }
-  g_string_append_printf(self->out, "\"server\":\"%s\",\"timestamp\":%ld}\n", self->hostname, tv_sec);
+  g_string_append_printf(self->out, "\"server\":\"%s\",\"timestamp\":%ld}%s\n", self->hostname, tv_sec, sep);
   return toprint;
 }
 
-int group(modPerf_stats_t *self, GROUP_e group, uint64_t tv_sec)
+int group(modPerf_stats_t *self, GROUP_e group, uint64_t tv_sec, char *sep)
 {
   g_string_assign(self->out, "{");
   switch (group)
@@ -1457,7 +1457,7 @@ int group(modPerf_stats_t *self, GROUP_e group, uint64_t tv_sec)
     default:
       break;
   }
-  g_string_append_printf(self->out, "\"server\":\"%s\",\"timestamp\":%ld}\n", self->hostname, tv_sec);
+  g_string_append_printf(self->out, "\"server\":\"%s\",\"timestamp\":%ld}%s\n", self->hostname, tv_sec, sep);
   return 0;
 }
 
@@ -1495,60 +1495,62 @@ static void usage() {
       " -p    Top 10 high cpu processes and top 5 high memory processes\n"
       "\nOptions:\n"
       " -r    Rsyslog improg dialog\n"
-      " -R    More human readable output\n\n");
+      " -R    More human Readable output\n\n");
 }
 
 int main (int argc, char *argv[])
 {
   modPerf_stats_t *self = malloc(sizeof(modPerf_stats_t));
   char hostname[500], line[100];
-  int acknoledge = 0;
+  int acknowledge = 0;
 
   signal(SIGINT, end_pgm);
   signal(SIGTERM, end_pgm);
 
+  /* Get hostname => fqdn or short name */
   gethostname(hostname,500);
+  /* if fqdn let's truncate to first dot */
   char *pos = strchr(hostname,'.');
   if (pos) *pos = '\0';
+
+  /* Initialize the structure content */
   stats_initialize(self, hostname, strlen(hostname));
 
   int opt, i;
   char *sep = "";
   int nothing_to_do = 1;
+  char *groupsopt = "tumsnip";
 
+  /* Manage command line options */
   while ((opt = getopt(argc, argv, "rA:t:u:m:s:n:i:p:Rh?")) != -1)
   {
-    int grp = 6;
-    int val = (optarg!=NULL) ? atoi(optarg) : 0;
+    int grp, val = (optarg!=NULL) ? atoi(optarg) : 0;
     int typ = (val<0)?-1:((val>0)?1:0);
     val = abs(val) - 1;
     switch (opt) {
     case 'r':
-      acknoledge = 1;
+      acknowledge = 1;
       break;
     case 'A':
       set_global_freq(self, typ, (unsigned int)val);
       nothing_to_do = 0;
       break;
     case 't':
-      grp--;
       /* fall through */
     case 'u':
-      grp--;
       /* fall through */
     case 'm':
-      grp--;
       /* fall through */
     case 's':
-      grp--;
       /* fall through */
     case 'n':
-      grp--;
       /* fall through */
     case 'i':
-      grp--;
       /* fall through */
     case 'p':
+      /* with cases above, groupsopt will contain opt */
+      for (grp = 0; grp < GROUP_MAX && opt != groupsopt[grp]; grp++)
+        ;
       set_group_freq(self, (GROUP_e)grp, typ, (unsigned int)val);
       nothing_to_do = 0;
       break;
@@ -1570,26 +1572,34 @@ int main (int argc, char *argv[])
 
   stats_allocate(self);
 
-  if (acknoledge) do {
+  /* if acknowledge is required then wait until START */
+  if (acknowledge) do {
     fgets(line, 100, stdin);
   } while (strncmp("START", line, 5));
 
   while (go_on)
   {
-    sleep(1);
-    struct timeval tim;
-
+    struct timeval tim, tend;
     gettimeofday(&tim,NULL);
+    /* let sleep until next seconds border .000000
+     * with this mechanism the period is the exact second
+     */
+    usleep(1000000 - tim.tv_usec);
+    /* now we are at (tim.tv_sec++).000000 */
+    tim.tv_sec++;
 
     if (((TYPE_ULL)tim.tv_sec & self->mask_freq_std) == 0)
     {
-      if (standard(self, tim.tv_sec))
+      /* This is the single json */
+      if (standard(self, tim.tv_sec, sep))
       {
-        printf("%.*s%s", (int)self->out->len, self->out->str, sep);
-        if (acknoledge)
+        /* With at least a group in the json */
+        write(STDOUT_FILENO, self->out->str, (int)self->out->len);
+        if (acknowledge)
         {
+          /* if acknowledge is required then wait until something or STOP */
           fgets(line, 100, stdin);
-          if (strncmp("STOP", line, 4)==0)
+          if (strncmp("STOP", line, 4) == 0)
             go_on = 0;
         }
       }
@@ -1598,13 +1608,16 @@ int main (int argc, char *argv[])
     {
       if (self->freq_data[i].type < 0 && (((TYPE_ULL)tim.tv_sec) & self->freq_data[i].mask) == 0)
       {
-        if (!group(self, (GROUP_e)i, tim.tv_sec))
+        /* This is the group level json */
+        if (!group(self, (GROUP_e)i, tim.tv_sec, sep))
         {
-          printf("%.*s%s", (int)self->out->len, self->out->str, sep);
-          if (acknoledge)
+          /* This group produce a json */
+          write(STDOUT_FILENO, self->out->str, (int)self->out->len);
+          if (acknowledge)
           {
+            /* if acknowledge is required then wait until something or STOP */
             fgets(line, 100, stdin);
-            if (strncmp("STOP", line, 4)==0)
+            if (strncmp("STOP", line, 4) == 0)
               go_on = 0;
           }
         }

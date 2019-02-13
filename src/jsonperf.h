@@ -71,7 +71,13 @@ typedef struct Group_source_s Group_source_t;
 typedef unsigned char uchar_t;
 #endif /*_UCHAR_T */
 
-struct configuration_s {
+/* Main structure, it contains for must groups an array of 2 storages
+ * one contains the previous collect one the current then methods can
+ * subtract between the two collects. Pointers on current and previous
+ * alternate as the current storage becomes the previous of the next
+ * collect
+ */
+struct modPerf_stats_s {
   size_t  lhostname;
   char hostname[256];
 
@@ -89,18 +95,18 @@ struct configuration_s {
 #   define GROUP_cpu_total CPU_TOTAL_GROUP
   } cpu_total;
 
+  struct {
+    STRUCT_PREFIX(cpu_t) *previous;
+    int nb;
+#   define GROUP_cpu CPUS_GROUP
+  } cpu;
+
   struct  {
     STRUCT_PREFIX(memory_total_t) data[2];
     STRUCT_PREFIX(memory_total_t) *current_snapshot;
     STRUCT_PREFIX(memory_total_t) *previous_snapshot;
 #   define GROUP_memory_total MEMORY_GROUP
   } memory_total;
-
-  struct {
-    STRUCT_PREFIX(cpu_t) *previous;
-    int nb;
-#   define GROUP_cpu CPUS_GROUP
-  } cpu;
 
   struct {
     STRUCT_PREFIX(disk_t) *previous;
@@ -152,6 +158,6 @@ struct configuration_s {
 
 };
 
-typedef struct configuration_s modPerf_stats_t;
+typedef struct modPerf_stats_s modPerf_stats_t;
 
 #endif
