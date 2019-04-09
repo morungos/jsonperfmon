@@ -11,6 +11,8 @@ typedef struct _GString
   size_t allocated_len;
 } GString;
 
+size_t safe_strlen(const char*str);
+
 void *g_new0(size_t  dfl_size);
 
 GString* g_string_sized_new     (size_t  dfl_size);

@@ -6,9 +6,20 @@
 
 #define fprintf(...)
 
+#define MAX_LEN 8192
 /******************************************************************************************************************
  * Glib compatibility
  *****************************************************************************************************************/
+
+size_t safe_strlen(const char *str)
+{
+    const char * end = (const char *)memchr(str, '\0', MAX_LEN);
+    if (end == NULL)
+        return MAX_LEN;
+    else
+        return end - str;
+}
+
 void *g_new0(size_t  dfl_size)
 {
   void *temp = malloc(dfl_size);
@@ -78,7 +89,7 @@ void g_string_append_printf(GString *string, const char *format, ...)
 
 GString* g_string_append(GString *string, const char *val)
 {
-  size_t required = strlen(val);
+  size_t required = safe_strlen(val);
 
   fprintf(stderr, "g_string_append        1 str=%p, len=%lu, allocated_len=%lu, required=%lu\n", string->str, string->len, string->allocated_len, required );
   if ( (string->len + required) >= string->allocated_len)
@@ -109,7 +120,7 @@ GString* g_string_append(GString *string, const char *val)
 
 GString* g_string_assign(GString *string, const char *val)
 {
-  size_t required = strlen(val);
+  size_t required = safe_strlen(val);
 
   if (required >= string->allocated_len)
   {

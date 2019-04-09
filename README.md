@@ -1,54 +1,57 @@
-JsonPerfMon
-===========
+# JsonPerfMon
 
-### Linux / AIX real time system monitoring.
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7c068b31136b42028d21efe7b55e4843)](https://app.codacy.com/app/pduveau/jsonperfmon?utm_source=github.com&utm_medium=referral&utm_content=pduveau/jsonperfmon&utm_campaign=Badge_Grade_Settings)
+
+## Linux / AIX real time system monitoring
 
 **JsonPerfMon** collects system information from a Linux/AIX system and print a json structures at a regular period to the standard output.
 
 ### Features
+**optimized C code** It only needs a few milliseconds per second to collect all the datas.
 
-- **optimized C code**
-  It only needs a few milliseconds per second to collect all the datas.
+**lightweight** It only needs a few megabytes of memory (~4 Mb) to manage datas. Memory is allocated during the first collect and reused during all the process life.
 
-- **lightweight**
-  It only needs a few megabytes of memory (~4 Mb) to manage datas.
-  Memory is allocated during the first collect and reused during all the process life.
+**Per second data collection** Every group of data - cpu_total, cpus, memory, disks, nfs, adapters & processes - can be collected in a single json or in an indivual one at a period of 2^n (power) seconds.
 
-- **Per second data collection**
-  Every group of data - cpu_total, cpus, memory, disks, nfs, adapters & processes - can be collected in a single json or in an indivual one 
-at a period of 2^n (power) seconds.
+**Rsyslog integration** The tool provide an option to communication through pipes with rsyslog improg module. 
 
-- **Rsyslog integration**
-  The tool provide an option to communication through pipes with rsyslog improg module. 
-
-- **Elasticsearch**
-  The json file can be efficiently inserted in elastic search indexes to monitoring multiple linux / Aix boxes in the same charts.
+**Elasticsearch** The json file can be efficiently inserted in elastic search indexes to monitoring multiple linux / Aix boxes in the same charts.
 
 ### Usage / options
 `jsonperfmon [-A <n>] [-t <n>] [-u <n>] [-m <n>] [-s <n>] [-n <n>] [-i <n>] [-p <n>] [-r] [-R]`
-`-A` set the period for All groups, always overwritten by individual group setting
-`-t` set the period for the cpu total
-`-u` set the period for the individual cpus 
-`-m` set the period for the memory
-`-s` set the period for the storage (disks & mounts)
-`-n` set the period for the nfs v3/v4
-`-i` set the period for the IO adapaters network and fiber channel
-`-p` set the period for the processes top 10 for high cpu and top 5 high memory
-`-r` activate dialog with rsyslog improg confirm mode
-`-R` insert an empty line between jsons for human readable purpose
-`<n>` `=0` disable the concerned group(s), `<0` produce the group every `2^(n-1)` seconds in the main json structure, `>0` same as `<0` except the json produced is dedicated to the group. 
+
+> `-A` set the period for All groups, always overwritten by individual group setting
+>
+> `-t` set the period for the cpu total
+>
+> `-u` set the period for the individual cpus 
+>
+> `-m` set the period for the memory
+>
+> `-s` set the period for the storage (disks & mounts)
+>
+> `-n` set the period for the nfs v3/v4
+>
+> `-i` set the period for the IO adapaters network and fiber channel
+>
+> `-p` set the period for the processes top 10 for high cpu and top 5 high memory
+>
+> `-r` activate dialog with rsyslog improg confirm mode
+>
+> `-R` insert an empty line between jsons for human readable purpose
+>
+> `<n>` `=0` disable the concerned group(s), `<0` produce the group every `2^(n-1)` seconds in the main json structure, `>0` same as `<0` except the json produced is dedicated to the group. 
 
 ### JSON attributes
-- `_s` => per second
-- `_us` => in µ-second
-- `_mb` => in mega-bytes
-- `_pct` => in percent
+> `_s` => per second
+> `_us` => in µ-second
+> `_mb` => in mega-bytes
+> `_pct` => in percent
 
-### JSON structure on AIX
-
-```
+#### JSON structure on AIX
+```jsonc
 {
-	"cpu_total": {							Group total cpu (-t)
+	"cpu_total": {							// Group total cpu (-t)
 		"active": 4,
 		"configured": 4,
 		"processorMHZ": 4228,
@@ -73,7 +76,7 @@ at a period of 2^n (power) seconds.
 			"T15": 6.6
 		}
 	},
-	"cpus": { 								Group cpus (-u)
+	"cpus": { 								// Group cpus (-u)
 		"0": {
 			"user_pct": 3.0,
 			"sys_pct": 15.2,
@@ -99,7 +102,7 @@ at a period of 2^n (power) seconds.
 			"idle_pct": 100.0
 		}
 	},
-	"memory": {								Group memory (-m)
+	"memory": {								// Group memory (-m)
 		"virt_total": 92416,
 		"real_total": 73728,
 		"real_free": 28485,
@@ -123,7 +126,7 @@ at a period of 2^n (power) seconds.
 			"rused": 11516561
 		}
 	},
-	"disks": {								Group storage (-d)
+	"disks": {								// Group storage (-d)
 		"hdisk0": {
 			"busy_pct": 0,
 			"read": {
@@ -153,7 +156,7 @@ at a period of 2^n (power) seconds.
 			}
 		}
 	},
-	"fs": {									Group storage
+	"fs": {									// Group storage
 		"dev_hd4": {
 			"mount": "/",
 			"type": "LUN",
@@ -174,7 +177,7 @@ at a period of 2^n (power) seconds.
 			"free_pct": 77
 		}
 	},
-	"nfsv3": {								Group nfs (-n)
+	"nfsv3": {								// Group nfs (-n)
 		"calls_s": 4,
 		"access_pct": 0.0,
 		"read_pct": 0.0,
@@ -185,7 +188,7 @@ at a period of 2^n (power) seconds.
 	"nfsv4": {
 		"calls_s": 0
 	},
-	"intfs": {								Group io-adapters (-a)
+	"intfs": {								// Group io-adapters (-a)
 		"en3": {
 			"in": {
 				"packets_s": 4,
@@ -215,7 +218,7 @@ at a period of 2^n (power) seconds.
 			"drops": 0
 		}
 	},
-	"fcadapters": {							Group io-adapters
+	"fcadapters": {							// Group io-adapters
 		"fcs0": {
 			"max_xfer": 0,
 			"rx_kb_s": 0,
@@ -228,7 +231,7 @@ at a period of 2^n (power) seconds.
 			"link_fail_tot": 0
 		}
 	},
-	"processes": { 							Group processes (-p)
+	"processes": { 							// Group processes (-p)
 		"cpu": {
 			"0": {
 				"pid": 33948658,
@@ -242,7 +245,7 @@ at a period of 2^n (power) seconds.
 				"cpu_pct": 0.1,
 				"mem_mb": 4
 			},
-			... until "9"
+			// ... until "9"
 		},
 		"mem": {
 			"0": {
@@ -255,7 +258,7 @@ at a period of 2^n (power) seconds.
 				"process": "IBM.ConfigRMd",
 				"mem_mb": 16
 			},
-			... until "4"
+			// ... until "4"
 		}
 	},
 	"server": "dev-aix-d1c",
@@ -263,10 +266,10 @@ at a period of 2^n (power) seconds.
 }
 ```
 
-###  JSON structure on Linux
-```
+#### JSON structure on Linux
+```jsonc
 {
-	"cpu_total": {							Group total cpu (-t)
+	"cpu_total": {							         // Group total cpu (-t)
 		"active": 2,
 		"configured": 2,
 		"processorMHZ": 2497,
@@ -284,7 +287,7 @@ at a period of 2^n (power) seconds.
 			"T15": 0.0
 		}
 	},
-	"cpus": { 								Group cpus (-u)
+	"cpus": { 								// Group cpus (-u)
 		"0": {
 			"user_pct": 0.0,
 			"sys_pct": 0.0,
@@ -293,7 +296,7 @@ at a period of 2^n (power) seconds.
 		},
 		...
 	},
-	"memory": {								Group memory (-m)
+	"memory": {								// Group memory (-m)
 		"virt_total": 726,
 		"real_total": 5845,
 		"real_free": 4008,
@@ -313,14 +316,14 @@ at a period of 2^n (power) seconds.
 			"faults_s": 30
 		}
 	},
-	"pagingspaces": {						Group memory
+	"pagingspaces": {					                 // Group memory
 		"/dev/dm-1": {
 			"type": "LV",
 			"size_mb": 4095,
 			"used_pct": 0.3
 		}
 	},
-	"disks": {								Group disks (-d)
+	"disks": {								// Group disks (-d)
 		"sda": {
 			"busy_pct": 0,
 			"read": {
@@ -357,9 +360,9 @@ at a period of 2^n (power) seconds.
 		}
 	},
 	"fs": {
-			... see AIX
+			// ... see AIX
 	},
-	"intfs": {								Group io-dapters (-a)
+	"intfs": {								// Group io-dapters (-a)
 		"eth0:": {
 			"in": {
 				"packets_s": 3,
@@ -375,7 +378,7 @@ at a period of 2^n (power) seconds.
 			"drops": 0
 		}
 	},
-	"fcadapters": {							Group io-adapters
+	"fcadapters": {						               // Group io-adapters
 		"fcs0": {
 			"rx_kb_s": 0,
 			"tx_kb_s": 0,
@@ -387,8 +390,8 @@ at a period of 2^n (power) seconds.
 			"link_fail_tot": 0
 		}
 	},
-	"processes": { 							Group processes (-p)
-			... see AIX
+	"processes": { 							// Group processes (-p)
+			// ... see AIX
 	},
 	"server": "dev-lnx-d10",
 	"timestamp": 1549740204

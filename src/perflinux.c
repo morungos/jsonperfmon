@@ -106,7 +106,7 @@ int perfunix_cpu_total(perfunix_id_t *name __attribute__((unused)), perfunix_cpu
         userbuff->runque = strtoull(buf+14, NULL, 10);     /* number of process switches (change in currently running process) */
       else if(*ui32_buf == *((uint32_t*)"cpu ") || *ui32_buf == *((uint32_t*)"cpu\t"))
       {
-        userbuff->puser = strtoull(buf+4, &p, 10) + (p) ? strtoull(++p, &p, 10) : 0;
+        userbuff->puser = strtoull(buf+4, &p, 10) + ((p) ? strtoull(++p, &p, 10) : 0);
         userbuff->psys  = (p) ? strtoull(++p, &p, 10) : 0;
         userbuff->pidle = (p) ? strtoull(++p, &p, 10) : 0;
         userbuff->pwait = (p) ? strtoull(++p, &p, 10) : 0;

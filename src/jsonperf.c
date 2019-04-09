@@ -39,6 +39,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 
 #ifdef _AIX
 # include <sys/systemcfg.h>
@@ -732,7 +733,7 @@ CALLTOTALBEGIN(our_stats, filesystems)
       continue;
     uint64_t size_mb = 0, free_pct = 0;
     char *p, *str = ent->mnt_fsname;
-    size_t l, len = strlen(ent->mnt_fsname);
+    size_t l, len = safe_strlen(ent->mnt_fsname);
 
      if (*str == '/') str++, len--;
 
@@ -894,7 +895,7 @@ CALLCOMPBEGIN2FREQ(our_stats, netinterface, FIRST_NETINTERFACE, curr, nb_nets)
     our_stats->netinterface.previous = (STRUCT_PREFIX(netinterface_t)*)realloc(our_stats->netinterface.previous, sizeof(STRUCT_PREFIX(netinterface_t))*nb_nets);
 
   FOREACHCOMPBEGIN2(j,nb_nets)
-    if (!strncmp(curr->name, "lo", 2) && strlen(curr->name)==3)
+    if (!strncmp(curr->name, "lo", 2) && safe_strlen(curr->name)==3)
       continue;
 
     for (idx = 0; idx < our_stats->netinterface.nb &&
@@ -1560,13 +1561,13 @@ int main (int argc, char *argv[])
     case 'h':
     case '?':
     default:
-      usage(argv[0]);
+      usage();
       return 0;
     }
   }
 
   if (nothing_to_do){
-    usage(argv[0]);
+    usage();
     return 0;
   }
 
@@ -1579,12 +1580,15 @@ int main (int argc, char *argv[])
 
   while (go_on)
   {
-    struct timeval tim, tend;
-    gettimeofday(&tim,NULL);
+    struct timeval tim;
+	struct timespec tsns, tsrm;
+    gettimeofday(&tim, NULL);
     /* let sleep until next seconds border .000000
      * with this mechanism the period is the exact second
      */
-    usleep(1000000 - tim.tv_usec);
+	tsns.tv_sec = 0;
+	tsns.tv_nsec = (1000000 - tim.tv_usec)*1000;
+    nanosleep(&tsns, &tsrm);
     /* now we are at (tim.tv_sec++).000000 */
     tim.tv_sec++;
 

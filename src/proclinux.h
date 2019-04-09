@@ -59,7 +59,7 @@ struct procentry64
 	}pi_ru;		/* this process' rusage info */
 };
 
-int	getprocs64 (void *procsinfo, int sizproc, void *fdsinfo, int sizfd,
+int	getprocs64(void *procsinfo, int sizproc, void *fdsinfo, int sizfd,
    	           pid_t *index, int count);
 
 #endif	/* _H_PROCLINUX */
