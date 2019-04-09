@@ -107,7 +107,7 @@ int getprocs64 (void *procsinfo, int sizproc __attribute__((unused)), void *fdsi
 				strcpy(filepath, FSDIRSEP "status");
 				hf = open(path, O_RDONLY, 0666);
 				if (hf > -1) {
-					s = read(hf, data[nb].pi_comm, 6);  /* Flawfinder: ignore */
+					s = lseek(hf, 6, SEEK_SET);
 					if (s == 6) {
 						s = read(hf, data[nb].pi_comm, MAX_PATH);  /* Flawfinder: ignore */
 						for (;lenname < s && data[nb].pi_comm[lenname] != '\n'; 
