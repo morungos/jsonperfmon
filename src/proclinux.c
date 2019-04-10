@@ -87,7 +87,7 @@ int getprocs64 (void *procsinfo, int sizproc __attribute__((unused)), void *fdsi
 		int hf = open(path, O_RDONLY, 0666);
 		if (hf > -1) {
 			char line[512];
-			ssize_t s = read(hf, line, sizeof(line)); /* Flawfinder: ignore */
+			ssize_t s = read(hf, line, sizeof(line));
 			if (s < 1 || s == sizeof(line))
 			return -1;
 
@@ -109,7 +109,7 @@ int getprocs64 (void *procsinfo, int sizproc __attribute__((unused)), void *fdsi
 				if (hf > -1) {
 					s = lseek(hf, 6, SEEK_SET);
 					if (s == 6) {
-						s = read(hf, data[nb].pi_comm, MAX_PATH);  /* Flawfinder: ignore */
+						s = read(hf, data[nb].pi_comm, MAX_PATH);
 						for (;lenname < s && data[nb].pi_comm[lenname] != '\n'; 
 								lenname++)
 							;
