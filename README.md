@@ -1,10 +1,26 @@
 # JsonPerfMon
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7c068b31136b42028d21efe7b55e4843)](https://app.codacy.com/app/pduveau/jsonperfmon?utm_source=github.com&utm_medium=referral&utm_content=pduveau/jsonperfmon&utm_campaign=Badge_Grade_Settings)
+This is a fork of the original and admirable 
+[jsonperfmon](https://github.com/pduveau/jsonperfmon).
+
+why make a fork? The significant difference is that this version doesn't use standard output,
+and is not designed for tight integration with rsyslog. Instead, it writes direct to syslog through
+the normal channels, and can be processed via rsyslog that way. This makes it easy to set up as an
+independent service daemon under, e.g., systemd. Given that recent versions of rsyslog no longer
+include the `improg` module that the original version of jsonperfmon was designed for, this is
+easier for our custom integration.
+
+Yes, the whole json thing makes less sense under these circumstances, but it's still handy when
+a downstream aggregation system is used, to provide a performance monitor across a cluster of
+servers.
+
+For this reason, most of the command line options are unchanged, but the `-r` option of the original
+jsonperfmon has been removed, as it was very specifically intended for use with this module 
+and tight integration with rsyslog.
 
 ## Linux / AIX real time system monitoring
 
-**JsonPerfMon** collects system information from a Linux/AIX system and print a json structures at a regular period to the standard output.
+**JsonPerfMon** collects system information from a Linux/AIX system and print a json structures at a regular period to a syslog stream.
 
 ### Features
 **optimized C code** It only needs a few milliseconds per second to collect all the datas.
@@ -12,10 +28,6 @@
 **lightweight** It only needs a few megabytes of memory (~4 Mb) to manage datas. Memory is allocated during the first collect and reused during all the process life.
 
 **Per second data collection** Every group of data - cpu_total, cpus, memory, disks, nfs, adapters & processes - can be collected in a single json or in an indivual one at a period of 2^n (power) seconds.
-
-**Rsyslog integration** The tool provide an option to communication through pipes with rsyslog improg module. 
-
-**Elasticsearch** The json file can be efficiently inserted in elastic search indexes to monitoring multiple linux / Aix boxes in the same charts.
 
 ### Usage / options
 `jsonperfmon [-A <n>] [-t <n>] [-u <n>] [-m <n>] [-s <n>] [-n <n>] [-i <n>] [-p <n>] [-r] [-R]`
@@ -35,8 +47,6 @@
 > `-i` set the period for the IO adapaters network and fiber channel
 >
 > `-p` set the period for the processes top 10 for high cpu and top 5 high memory
->
-> `-r` activate dialog with rsyslog improg confirm mode
 >
 > `-R` insert an empty line between jsons for human readable purpose
 >
