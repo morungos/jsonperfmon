@@ -14,6 +14,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -rdynamic -pthread")
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "" FORCE)
 
+set(CMAKE_INSTALL_PREFIX /usr/local)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/modules")
 
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
@@ -26,3 +28,7 @@ set(SOURCE_FILES
 add_executable(jsonperfmon ${SOURCE_FILES})
 
 target_include_directories(jsonperfmon PUBLIC src)
+
+install(TARGETS jsonperfmon
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+)
