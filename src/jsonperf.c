@@ -1506,6 +1506,8 @@ int main (int argc, char *argv[])
   signal(SIGINT, end_pgm);
   signal(SIGTERM, end_pgm);
 
+  openlog("jsonperfmon", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+
   /* Get hostname => fqdn or short name */
   gethostname(hostname,500);
   /* if fqdn let's truncate to first dot */
@@ -1588,7 +1590,7 @@ int main (int argc, char *argv[])
       if (standard(self, tim.tv_sec, sep))
       {
         /* With at least a group in the json */
-        write(STDOUT_FILENO, self->out->str, (int)self->out->len);
+        syslog(LOG_INFO, "%.*s", (int)self->out->len, self->out->str);
       }
     }
     for (i=0; go_on && i<GROUP_MAX; i++)
@@ -1599,7 +1601,7 @@ int main (int argc, char *argv[])
         if (!group(self, (GROUP_e)i, tim.tv_sec, sep))
         {
           /* This group produce a json */
-          write(STDOUT_FILENO, self->out->str, (int)self->out->len);
+          syslog(LOG_INFO, "%.*s", (int)self->out->len, self->out->str);
         }
       }
     }
@@ -1607,6 +1609,7 @@ int main (int argc, char *argv[])
 
   stats_free(self);
   free(self);
+  closelog();
 
   return 0;
 }
