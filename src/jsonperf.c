@@ -1495,7 +1495,6 @@ static void usage() {
       " -i    IO Adaptors net/FC\n"
       " -p    Top 10 high cpu processes and top 5 high memory processes\n"
       "\nOptions:\n"
-      " -r    Rsyslog improg dialog\n"
       " -R    More human Readable output\n\n");
 }
 
@@ -1503,7 +1502,6 @@ int main (int argc, char *argv[])
 {
   modPerf_stats_t *self = malloc(sizeof(modPerf_stats_t));
   char hostname[500], line[100];
-  int acknowledge = 0;
 
   signal(SIGINT, end_pgm);
   signal(SIGTERM, end_pgm);
@@ -1523,15 +1521,12 @@ int main (int argc, char *argv[])
   char *groupsopt = "tumsnip";
 
   /* Manage command line options */
-  while ((opt = getopt(argc, argv, "rA:t:u:m:s:n:i:p:Rh?")) != -1)
+  while ((opt = getopt(argc, argv, "A:t:u:m:s:n:i:p:Rh?")) != -1)
   {
     int grp, val = (optarg!=NULL) ? atoi(optarg) : 0;
     int typ = (val<0)?-1:((val>0)?1:0);
     val = abs(val) - 1;
     switch (opt) {
-    case 'r':
-      acknowledge = 1;
-      break;
     case 'A':
       set_global_freq(self, typ, (unsigned int)val);
       nothing_to_do = 0;
@@ -1573,11 +1568,6 @@ int main (int argc, char *argv[])
 
   stats_allocate(self);
 
-  /* if acknowledge is required then wait until START */
-  if (acknowledge) do {
-    fgets(line, 100, stdin);
-  } while (strncmp("START", line, 5));
-
   while (go_on)
   {
     struct timeval tim;
@@ -1599,13 +1589,6 @@ int main (int argc, char *argv[])
       {
         /* With at least a group in the json */
         write(STDOUT_FILENO, self->out->str, (int)self->out->len);
-        if (acknowledge)
-        {
-          /* if acknowledge is required then wait until something or STOP */
-          fgets(line, 100, stdin);
-          if (strncmp("STOP", line, 4) == 0)
-            go_on = 0;
-        }
       }
     }
     for (i=0; go_on && i<GROUP_MAX; i++)
@@ -1617,13 +1600,6 @@ int main (int argc, char *argv[])
         {
           /* This group produce a json */
           write(STDOUT_FILENO, self->out->str, (int)self->out->len);
-          if (acknowledge)
-          {
-            /* if acknowledge is required then wait until something or STOP */
-            fgets(line, 100, stdin);
-            if (strncmp("STOP", line, 4) == 0)
-              go_on = 0;
-          }
         }
       }
     }
